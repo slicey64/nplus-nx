@@ -350,8 +350,10 @@ def main():
         if a.dry_run or not accepted:
             break
         append_overrides(n, accepted, candidates, notes)
-        r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-                            os.path.join(TOOLS, 'codegen.ps1'), '-Rexglue', rexglue], capture_output=True, text=True)
+        r = subprocess.run((['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                            os.path.join(TOOLS, 'codegen.ps1'), '-Rexglue', rexglue] if os.name == 'nt' else
+                            # nplus-nx: macOS / Linux run tools/codegen.sh (rehatched-nx's)
+                            ['bash', os.path.join(TOOLS, 'codegen.sh'), rexglue]), capture_output=True, text=True)
         if r.returncode != 0:
             sys.exit(f'codegen failed after pass {n}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}')
 

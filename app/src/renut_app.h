@@ -285,7 +285,7 @@ public:
 #if defined(KATAMARI_BUILTIN_CONFIG)
         // The player's settings file. Not renut.toml: the test builds' full one, left on an SD card, would override
         // every built-in setting.
-        paths.config_path = rex::filesystem::GetExecutableFolder() / "katamari.toml";
+        paths.config_path = rex::filesystem::GetExecutableFolder() / "nplus.toml";  // nplus-nx
 #endif
         if (paths.game_data_root.empty()) {
             const auto folder = rex::filesystem::GetExecutableFolder();

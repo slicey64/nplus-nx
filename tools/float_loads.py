@@ -101,6 +101,11 @@ def next_use_is_double(lines, i, reg):
 
 MARKER = '// rexglue ports: single-precision loads swapped in the vector unit (tools/float_loads.py)'
 MACROS = MARKER + '''
+#ifndef REX_ADDR_D
+// nplus-nx: the pch defines REX_ADDR_D only without a physical-window offset; Apple Silicon (REX_PLATFORM_MAC &&
+// REX_ARCH_ARM64) has one and takes the AArch64 forms below, so give it the plain macros' address there.
+#define REX_ADDR_D(r, d) (base + (u32)((u32)(r) + (d)) + REX_PHYS_HOST_OFFSET((u32)(r) + (d)))
+#endif
 #ifndef REX_LOAD_F32
 #if (defined(__aarch64__) || defined(_M_ARM64)) && !defined(REX_FLOAT_LOADS_INTEGER)
 [[gnu::always_inline]] static inline float RexFloatFromBigEndian(const void* p) noexcept {

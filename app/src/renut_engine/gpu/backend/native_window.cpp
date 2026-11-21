@@ -14,6 +14,9 @@
 
 #include <SDL3/SDL_properties.h>
 #include <SDL3/SDL_video.h>
+#if defined(__APPLE__)
+#include <SDL3/SDL_metal.h>
+#endif
 #endif
 
 namespace renut::gpu {
@@ -87,6 +90,57 @@ bool GetRenderWindowPixelSize(uint32_t &width, uint32_t &height) {
     return false;
   width = w;
   height = h;
+  return true;
+}
+
+#elif defined(__APPLE__)
+
+// nplus-nx (macOS): plume's Vulkan backend (MoltenVK) makes its surface with VK_EXT_metal_surface from a CAMetalLayer
+// (RenderWindow::view) and sizes it through the NSWindow (RenderWindow::window). SDL3 gives both through its C API: a
+// Metal view on the game's window (made once, kept for the window's life) and its layer.
+namespace {
+
+SDL_Window *FindGameSdlWindow() {
+  int count = 0;
+  SDL_Window **windows = SDL_GetWindows(&count);
+  SDL_Window *sdl_window = (windows && count > 0) ? windows[0] : nullptr;
+  SDL_free(windows);
+  return sdl_window;
+}
+
+SDL_MetalView g_metal_view = nullptr;
+SDL_Window *g_metal_view_window = nullptr;
+
+}  // namespace
+
+bool GetNativeRenderWindow(plume::RenderWindow &out) {
+  SDL_Window *sdl_window = FindGameSdlWindow();
+  if (!sdl_window) {
+    RGPU_ERROR("No SDL window for the Vulkan surface");
+    return false;
+  }
+  if (g_metal_view_window != sdl_window) {
+    g_metal_view = SDL_Metal_CreateView(sdl_window);
+    g_metal_view_window = sdl_window;
+  }
+  const SDL_PropertiesID props = SDL_GetWindowProperties(sdl_window);
+  out.window = SDL_GetPointerProperty(props, SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, nullptr);
+  out.view = g_metal_view ? SDL_Metal_GetLayer(g_metal_view) : nullptr;
+  if (!out.window || !out.view) {
+    RGPU_ERROR("SDL window has no Cocoa window or Metal layer (video driver '{}'): {}",
+               SDL_GetCurrentVideoDriver() ? SDL_GetCurrentVideoDriver() : "none", SDL_GetError());
+    return false;
+  }
+  return true;
+}
+
+bool GetRenderWindowPixelSize(uint32_t &width, uint32_t &height) {
+  SDL_Window *sdl_window = FindGameSdlWindow();
+  int w = 0, h = 0;
+  if (!sdl_window || !SDL_GetWindowSizeInPixels(sdl_window, &w, &h))
+    return false;
+  width = uint32_t(w);
+  height = uint32_t(h);
   return true;
 }
 

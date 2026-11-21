@@ -191,7 +191,7 @@ bool TurnedOffInToml() {
   const char* bar = strrchr(nro, '/');
   if (!bar) return false;
   char path[FS_MAX_PATH];
-  const int n = snprintf(path, sizeof(path), "%s%.*skatamari.toml", strchr(nro, ':') ? "" : "sdmc:",
+  const int n = snprintf(path, sizeof(path), "%s%.*snplus.toml", strchr(nro, ':') ? "" : "sdmc:",
                          static_cast<int>(bar - nro + 1), nro);
   if (n <= 0 || static_cast<size_t>(n) >= sizeof(path)) return false;
   FILE* f = fopen(path, "r");
@@ -308,7 +308,11 @@ void Apply(Handle proc) {
 __attribute__((constructor(101))) void RexCodeBlocksInit() {
   const Handle proc = envGetOwnProcessHandle();
   if (proc == INVALID_HANDLE) {
-    SelfTest(CUR_PROCESS_HANDLE);
+    // nplus-nx: no self-test without a loader. With a Ryujinx that accepts the current-process pseudo-handle in the
+    // process-memory calls (N+'s patched 1.3.3: docs/nplus-notes.md), its page is mapped and the jump into it lands
+    // on code the JIT never sees (a branch to the alias, a fault in __libc_init_array). It was only a diagnostic; the
+    // console (the loader's handle) never comes here.
+    snprintf(g_status, sizeof(g_status), "[code blocks] no loader (an emulator), left where it is; swap self-test skipped");
     return;
   }
   if (TurnedOffInToml()) {

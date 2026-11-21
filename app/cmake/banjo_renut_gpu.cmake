@@ -22,6 +22,12 @@ foreach(_banjo_var CMAKE_C_COMPILER_TARGET CMAKE_CXX_COMPILER_TARGET CMAKE_LINKE
         list(APPEND BANJO_RENUT_XENOS_RECOMP_ARGS "-D${_banjo_var}=${${_banjo_var}}")
     endif()
 endforeach()
+# nplus-nx (macOS): dxc-bin's libdxcompiler.dylib is @rpath/libdxcompiler.dylib and XenosRecomp gets no rpath of its
+# own, so it could not start ("no LC_RPATH's found"): give it the dxc-bin library folder.
+if(APPLE)
+    list(APPEND BANJO_RENUT_XENOS_RECOMP_ARGS
+         "-DCMAKE_BUILD_RPATH=${CMAKE_SOURCE_DIR}/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/lib/arm64")
+endif()
 
 # Renut's SDK exports o1heap as rex::o1heap; banjo-nx's SDK fork names it o1heap.
 if(TARGET o1heap AND NOT TARGET rex::o1heap)

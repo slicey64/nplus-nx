@@ -1,0 +1,137 @@
+# nplus-nx: Renut's Direct3D hooks (the ultimate base's, at Beautiful Katamari's XDK 2.0.5632 addresses)
+# at N+'s (XDK 2.0.6274). Applied by tools/nplus/hook_apply.py. See tools/nplus/hookmap.py for the columns.
+katamari_addr	hook	kind	file	nplus_addr	status	evidence
+sub_824E0590	D3DDevice_InsertCallback_hook	HOOK	device.cpp	-	none	not found yet
+sub_824D01C8	D3DDevice_AddRef_hook	HOOK	device.cpp	-	none	guest's own count is the hook's
+sub_824D0430	D3DDevice_AcquireThreadOwnership_hook	HOOK	device.cpp	-	none	guest's own
+sub_824D0470	D3DDevice_ReleaseThreadOwnership_hook	HOOK	device.cpp	-	none	guest's own
+sub_824E6410	D3DDevice_GetDeviceCaps_hook	HOOK	device.cpp	sub_8227FCF8	hand	memcpy(out, 0x8208DDA0, 304): Katamari's 304-byte copy; 0x8208DDA0 = N+'s caps table
+sub_82641498	D3DDevice_GetDisplayMode_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_8225D1D0	D3DDevice_BlockOnFence_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_824E89E8	D3D_SynchronizeToPresentationInterval_hook	HOOK	device.cpp	sub_82285948	hand	Present calls it before Resolve (Katamari's evidence); reads PresentInterval +13580 (Katamari 0x3504 + 8)
+sub_8263D4B8	D3DResource_GetDevice_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_82BC8078	D3D_IsFusion_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_824DE218	D3DDevice_SetGammaRamp_hook	HOOK	device.cpp	sub_82271938@D3DDevice_SetGammaRamp_flags_hook	hand	Flags form: InitializePresentationParameters calls (device, 0, ramp); gamma pending pair +22252/+22256 (Katamari 0x56E4/0x56E8 + 8)
+sub_824DE2F8	D3DDevice_SetPWLGamma_hook	HOOK	device.cpp	sub_82271A18@D3DDevice_SetPWLGamma_flags_hook	hand	Flags form, called after SetGammaRamp with (device, 0, ramp) as Katamari's order; same gamma fields
+sub_824D0598	Direct3D_CreateDevice_hook	HOOK	device.cpp	sub_8227E270	hand	li r3,22400 (0x5780) align 128 via sub_8227E030, then the device init sub_82287160; stores 22280
+sub_824D0368	D3DDevice_Release_hook	HOOK	device.cpp	sub_8227E320	hand	11 game callers; Uninitialize sub_822873E0 then free
+sub_824ED278	D3D_XenonGpu_Initialize_hook	HOOK	device.cpp	-	none	device init only (CreateDevice is hooked)
+sub_824E11A0	D3D_InitializeApiState_hook	HOOK	device.cpp	-	none	device init only (CreateDevice is hooked)
+sub_824E1408	D3D_InitializePresentationParameters_hook	HOOK	device.cpp	sub_82286C18	hand	VdQueryVideoMode, CreateTexture, CreateSurface x2, SetRenderTarget, SetDepthStencilSurface, memcpy 124 to +13528
+sub_824E1B50	D3D_CDevice_Uninitialize_hook	HOOK	device.cpp	sub_822873E0	hand	VdShutdownEngines, VdSetGraphicsInterruptCallback
+sub_824E0298	KickOff_hook	HOOK	device.cpp	sub_82277C88	hand	(device): skips when InKickOff +13216, flushes via sub_82277948, returns +48; 96 callers
+sub_824E0110	KickOffSegment_hook	HOOK	device.cpp	sub_82277948	hand	reads InKickOff +13216 and the segment +13500/+13520; KickOff's flush
+sub_824E04B0	BeginRingBig_hook	HOOK	device.cpp	sub_82276930	hand	(device, count): room at +48/+52 for count dwords, KickOff, then sub_82277120; 15 callers
+sub_8255A200	BeginRingManual_hook	HOOK	device.cpp	-	none	not identified (as rehatched-nx)
+sub_824DF3F0	RingBufferDeviceAllocate_hook	HOOK	device.cpp	-	none	sub_82277038 is (device, size, align): not the hook's (device, flags, size*, alignment); first run decides
+sub_821FC318	AllocateInlineData_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_824E05E8	D3DDevice_SetRingBufferParameters_hook	HOOK	device.cpp	sub_822786B8	hand	the VdInitializeRingBuffer / VdEnableRingBufferRPtrWriteBack caller
+sub_824E8E90	D3DDevice_Swap_hook	HOOK	device.cpp	sub_82285E68	hand	the only VdSwap caller; SwapCount +16544 ++, PresentFenceTag +14924
+sub_82640818	D3DDevice_BeginCommandBuffer_hook	UNHOOKED_HOOK_SHARED	device.cpp	-	base-unhooked	
+sub_82640DE8	D3DDevice_EndCommandBuffer_hook	UNHOOKED_HOOK	device.cpp	-	base-unhooked	
+sub_821F1A78	D3DDevice_RunCommandBuffer_hook	UNHOOKED_HOOK_SHARED	device.cpp	-	base-unhooked	
+sub_824DFC48	BlockOnFence_hook	HOOK	device.cpp	sub_82277F88	hand	(device, fence, type): fence vs written-back +10896/+10908, KickOff when current, waits via CBlocker sub_8227E198
+sub_824D0290	CBlocker_Check_hook	HOOK	device.cpp	sub_8227E198	hand	BlockOnFence's wait loop check on the stack blocker
+sub_824E03D0	IsFencePending_hook	HOOK	device.cpp	sub_82277E58	hand	(fence): global device *0x82000854, fence vs +10908 / *(+10896)
+sub_824D9D08	D3DDevice_DrawVertices_hook	HOOK	draw.cpp	sub_8226AB78	shape	251 insns, PM4 draw headers, after the UP forms (Katamari's order: UP, DrawVertices, DrawIndexedVertices, Tessellated); check arity
+sub_824DA0F0	D3DDevice_DrawIndexedVertices_hook	HOOK	draw.cpp	sub_8226AF68	shape	278 insns, reads IndexBuffer +12428, PM4 draw headers; next after DrawVertices; check arity
+sub_824DA9C0	D3DDevice_DrawIndexedTessellatedVertices_hook	HOOK	draw.cpp	-	none	tessellation unused by N+? keep sub_8226B3C0 out until a run shows it
+sub_824D9758	D3DDevice_DrawVerticesUP_hook	HOOK	draw.cpp	sub_8226A5C0	hand	(device, prim, count, data, stride): BeginVertices(dev, prim, count, stride), memcpy(count*stride), ring = +13428
+sub_8263F2B8	D3DDevice_DrawIndexedVerticesUP_hook	UNHOOKED_HOOK	draw.cpp	-	base-unhooked	
+sub_824D92B8	D3DDevice_BeginVertices_hook	HOOK	draw.cpp	sub_8226A110	hand	(device, prim, count, stride): reserves in the vertices ring +13428..13440; 296 insns = Katamari's 0x4A0 to DrawVerticesUP; 10 callers
+sub_824F3248	D3DDevice_ClearF_hook	HOOK	draw.cpp	-	none	not called by N+: clears go through the tiling resolves (BeginTiling sub_822918B0 / EndTiling sub_82291C58)
+sub_824F3370	D3DDevice_Clear_hook	HOOK	draw.cpp	-	none	as ClearF
+sub_824F12B8	D3DDevice_Resolve_hook	HOOK	draw.cpp	sub_8228D3C0	shape	Present's resolve call (stack args +92/+100), 869 insns, reads targets/tiling, writes +10776..; XDK 5632-style, no internal split seen yet
+sub_82246798	D3DDevice_BeginTiling_hook	UNHOOKED_HOOK_SHARED	draw.cpp	-	base-unhooked	
+sub_821E17C0	D3DDevice_EndTiling_hook	UNHOOKED_HOOK	draw.cpp	-	base-unhooked	
+sub_824EFBC8	(raw)	HOOK_RAW	draw.cpp	sub_822918B0	shape	BeginTiling (raw): writes predication +12700.. and the tiling surfaces, calls SetViewport-like sub_8226DF68 and SetScissorRect; check its register arguments against BeginTilingImpl
+sub_824F0150	(raw)	HOOK_RAW	draw.cpp	sub_82291C58	shape	EndTiling (raw): resolves through Resolve sub_8228D3C0 twice (Katamari's evidence); check its register arguments
+sub_82237FE8	D3DDevice_BeginExport_hook	UNHOOKED_HOOK_SHARED	draw.cpp	-	base-unhooked	
+sub_82237D80	D3DDevice_EndExport_hook	UNHOOKED_HOOK_SHARED	draw.cpp	-	base-unhooked	
+sub_824E9428	D3DDevice_Present_hook	HOOK	draw.cpp	sub_82286438	hand	memset 28, SetRenderTarget, Sync, Resolve, KickOff, 8226DF68, 82270760, Swap
+sub_824D4930	D3DDevice_SetVertexShader_hook	HOOK	draw.cpp	sub_82261868	hand	stores VertexShader +12688 (Katamari 0x3190); 8 game callers
+sub_824D4630	D3DDevice_SetPixelShader_hook	HOOK	draw.cpp	sub_82261408	hand	stores PixelShader +12684 (Katamari 0x318C); 8 game callers
+sub_824D23F8	D3DDevice_CreateSurface_hook	HOOK	resource.cpp	sub_8227DAC8	hand	InitializePresentationParameters calls it twice (colour, depth)
+sub_824DB028	D3DResource_Destroy_hook	HOOK	resource.cpp	sub_8226C148	hand	Release's zero path: BlockOnFence, free; clears the HiZ owner 0x82775FC0
+sub_824DB448	D3D_UnlockResource_hook	HOOK	resource.cpp	sub_8226C548	hand	(resource, base, mip): atomic -0x100 on Common, resets +0x14 to 0xFFFF0000 at the last unlock: the hook's own steps; the Unlock thunks tail-call it
+sub_824DB7B0	D3DVertexBuffer_Unlock_hook	HOOK	resource.cpp	-	none	thunk: tail-calls UnlockResource (hooked)
+sub_824D0700	D3DSurface_UnlockRect_hook	HOOK	resource.cpp	-	none	thunk to UnlockResource (hooked)
+sub_824DB210	LockResource_hook	HOOK	resource.cpp	sub_8226C318	hand	(resource, type unused, r5..r10 mip/base/address/size/flags; flags & 0x1010); BlockOnFence; every Lock wrapper ends here
+sub_824DB760	D3DVertexBuffer_Lock_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824DB870	D3DIndexBuffer_Lock_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824D1918	D3D_LockSurface_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824D19E0	D3D_Lock2DSurface_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824D1A70	D3D_Lock3DSurface_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_8263E958	D3DArrayTexture_LockRect_hook	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824D2148	D3DLineTexture_LockRect_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824D25B8	D3DSurface_LockRect_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_824D2620	D3DVolume_LockBox_hook	HOOK	resource.cpp	-	none	wrapper: ends in LockResource (hooked)
+sub_8263EA48	D3D_Lock3DSurface_hook	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824DB550	D3DResource_AddRef_hook	HOOK	resource.cpp	sub_8226C788	hand	atomic +1 on +4 (lwarx/stwcx)
+sub_824DB5C8	D3DResource_Release_hook	HOOK	resource.cpp	sub_8226C800	hand	atomic -1 on +4, Destroy sub_8226C148 at zero; 48 game callers
+sub_824DAF98	D3DResource_GetType_hook	HOOK	resource.cpp	sub_8226C8A8	hand	type from Common & 0xF and the texture dimension bits
+sub_824D2520	D3DSurface_GetDesc_hook	HOOK	resource.cpp	-	none	pure
+sub_824D25D8	D3DVolume_GetDesc_hook	HOOK	resource.cpp	-	none	pure
+sub_824D1258	Get2DSurfaceDesc	HOOK	resource.cpp	-	none	pure
+sub_8263E970	Get2DSurfaceDesc	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824D1358	Get3DSurfaceDesc	HOOK	resource.cpp	-	none	pure
+sub_8263E978	Get3DSurfaceDesc	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824D0E90	LevelLayout_hook	HOOK	resource.cpp	-	none	pure
+sub_824D1458	SubresourceLayout_hook	HOOK	resource.cpp	-	none	pure
+sub_824D2080	D3DBaseTexture_GetLevelCount_hook	HOOK	resource.cpp	-	none	pure
+sub_8263E960	D3DArrayTexture_GetArraySize_hook	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824D06E8	D3DArrayTexture_UnlockRect_hook	HOOK	resource.cpp	-	none	thunk to UnlockResource (hooked)
+sub_824DB8B8	D3DConstantBuffer_Unlock_hook	HOOK	resource.cpp	-	none	thunk to UnlockResource (hooked)
+sub_824D2090	D3DTexture_GetSurfaceLevel_hook	HOOK	resource.cpp	-	none	guest makes the surface object; first run decides
+sub_824D2160	D3DCubeTexture_GetCubeMapSurface_hook	HOOK	resource.cpp	-	none	as GetSurfaceLevel
+sub_824D2228	D3DVolumeTexture_GetVolumeLevel_hook	HOOK	resource.cpp	-	none	as GetSurfaceLevel
+sub_824DB698	D3DDevice_CreateVertexBuffer_hook	HOOK	resource.cpp	-	none	reduced form sub_8226C938 (length only, LTCG): the guest's own allocation is the hook's
+sub_824DB7C0	D3DDevice_CreateIndexBuffer_hook	HOOK	resource.cpp	-	none	as CreateVertexBuffer: the guest allocates as the hook would
+sub_824D22D8	D3DDevice_CreateTexture_hook	HOOK	resource.cpp	sub_8227D9A8	hand	InitializePresentationParameters' first surface (8 args); 14 callers
+sub_824D1B18	SetTextureHeader_hook	HOOK	resource.cpp	-	none	pure header writer
+sub_824D09C8	FindTextureSize_hook	HOOK	resource.cpp	-	none	pure
+sub_824D0820	GetMaxMipLevels_hook	HOOK	resource.cpp	-	none	pure
+sub_824D0650	GetTextureDimensions_hook	HOOK	resource.cpp	-	none	pure layout arithmetic: the guest's is exact
+sub_8263DCA8	GetGpuTextureDimensions_hook	UNHOOKED_HOOK	resource.cpp	-	base-unhooked	
+sub_824D0788	BlockSizeOfGpuFormat_hook	HOOK	resource.cpp	-	none	pure
+sub_824D08A8	AlignTextureDimensions_hook	HOOK	resource.cpp	-	none	pure
+sub_824D0D38	GetMipTailLevelOffsetCoords_hook	HOOK	resource.cpp	-	none	pure
+sub_824D6120	D3DDevice_CreateVertexShader_hook	HOOK	shader.cpp	sub_82261738	hand	allocates, copies the 872-byte header (the vertex shader's +872 block, rehatched-nx's note); CreatePixelShader's sibling
+sub_824D6010	D3DDevice_CreatePixelShader_hook	HOOK	shader.cpp	sub_822612B8	hand	allocates and copies the shader; CreateVertexShader's sibling (same shape, 68 insns)
+sub_824D4C50	D3DDevice_CreateVertexDeclaration_hook	HOOK	shader.cpp	sub_82261C40	hand	allocates, sub_82261B50 counts the elements to the end marker
+sub_8263FBD0	D3DVertexShader_Bind_hook	UNHOOKED_HOOK	shader.cpp	-	base-unhooked	
+sub_824D4838	XGRegisterVertexShader_hook	HOOK	shader.cpp	-	none	not found yet
+sub_826375A0	XGRegisterPixelShader_hook	UNHOOKED_HOOK	shader.cpp	-	base-unhooked	
+sub_824D2640	D3DDevice_SetTexture_hook	HOOK	state.cpp	sub_8227DDB0	hand	texture slot index 3134 (x4 = 0x30F8); 12 game callers
+sub_824A3D40	D3DDevice_SetTexture_hook	HOOK	state.cpp	-	none	SetTexture_Inline: compiled into game code in N+ (the slot-index writers 8227DF30, 822703C0, 82270340 have no callers)
+sub_824DDFE0	D3DDevice_SetStreamSource_hook	HOOK	state.cpp	sub_82270940	hand	stream slot index +3113 (x4 = 0x30A4), strides +12520 (0x30E8); 12 game callers
+sub_824DE188	D3DDevice_SetIndices_hook	HOOK	state.cpp	sub_82270AE8	hand	stores IndexBuffer +12428 (0x308C)
+sub_824D4B48	D3DDevice_SetVertexDeclaration_hook	HOOK	state.cpp	sub_82261A70	hand	stores VertexDeclaration +11812 (Katamari 0x2E24)
+sub_824DE730	D3DDevice_SetViewport_hook	HOOK	state.cpp	-	none	inline in N+'s game code (viewport +12640 written by sub_8226DF68 inside Present/BeginTiling); renderer reads the device
+sub_824DE4B8	D3D_SetViewport_hook	HOOK	state.cpp	-	none	as SetViewport
+sub_824DDEE0	D3DDevice_SetScissorRect_hook	HOOK	state.cpp	sub_82270760	hand	stores the scissor RECT +12668..12680 (Katamari 0x317C); Present's tail calls it (Katamari's evidence)
+sub_824DB8C8	D3D_SetSurfaceClip_hook	HOOK	state.cpp	-	none	not found yet
+sub_824DE868	D3DDevice_SetRenderTarget_hook	HOOK	state.cpp	sub_82270BB8	hand	(device, index, surface): slot (3108+index)*4 = +12432; after CreateSurface
+sub_824DEBD0	D3DDevice_SetDepthStencilSurface_hook	HOOK	state.cpp	sub_82270F20	hand	after the depth CreateSurface; stores +12448
+sub_824DE7D0	D3D_SetSurfaceInfo_hook	HOOK	state.cpp	-	none	not found yet
+sub_824EFA58	D3DDevice_SetPredication_hook	HOOK	state.cpp	-	none	several writers of +12700; not settled
+sub_826411C0	D3DDevice_SetCommandBufferPredication_hook	UNHOOKED_HOOK_SHARED	state.cpp	-	base-unhooked	
+sub_824D4CD8	D3DDevice_SetShaderGPRAllocation_hook	HOOK	state.cpp	-	none	not found yet
+sub_824D3FE0	D3D_CleanupGprAllocationSetup_hook	HOOK	state.cpp	-	none	not found yet
+sub_824E67C8	D3DDevice_SetScreenExtentQueryMode_hook	HOOK	state.cpp	sub_82280D90	shape	rlwimi r4 into +10916 bits 18-19, ring check, KickOff
+sub_824D0488	D3DDevice_UnsetAll_hook	HOOK	state.cpp	-	none	not found yet
+sub_824DE3C0	D3D_ResetAllState_hook	HOOK	state.cpp	-	none	device init only (CreateDevice is hooked)
+sub_82634B90	D3D_InvalidateConstants_hook	UNHOOKED_HOOK_SHARED	state.cpp	-	base-unhooked	
+sub_824E0518	D3DDevice_BlockUntilIdle_hook	HOOK	state.cpp	sub_822783B0	hand	ring packet 0x5C8, BlockOnFence(+10908, 4), spins on +11000
+sub_82636EC8	D3DDevice_SetRenderTarget_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82636ED0	D3DDevice_GetRenderTarget_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82636F10	D3DDevice_GetDepthStencilSurface_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82636E40	D3DDevice_GetStreamSource_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82244B18	D3DDevice_GetViewport_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_826370E8	D3DDevice_SetClipPlane_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82637138	D3DDevice_SetVertexFetchConstant_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_824D4470	D3DDevice_SetVertexShaderConstantB_hook	HOOK	state.cpp	sub_82260E80	hand	(dev, start, pBool, count): bits into words (2528 + reg/32)*4 = 0x2780
+sub_824D44D0	D3DDevice_SetPixelShaderConstantB_hook	HOOK	state.cpp	sub_82260EE0	hand	as SetVertexShaderConstantB with 2532 (0x2790); Katamari's pair 0x60 apart, N+'s too
+sub_826374B0	D3DDevice_SetVertexShaderConstantI_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_82637500	D3DDevice_SetPixelShaderConstantI_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	
+sub_8263ED90	D3DDevice_EndIndexedVertices_hook	UNHOOKED_HOOK	state.cpp	-	base-unhooked	

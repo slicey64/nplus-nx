@@ -68,6 +68,11 @@ set_target_properties(renut_smolv PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set(RENUT_DXC_BIN_DIR "${RENUT_XENOS_RECOMP_DIR}/thirdparty/dxc-bin/bin/x64")
 if(CMAKE_HOST_WIN32)
     set(RENUT_DXC "${RENUT_DXC_BIN_DIR}/dxc.exe")
+elseif(CMAKE_HOST_APPLE)
+    # nplus-nx: dxc-bin's macOS build (universal) under bin/arm64 and lib/arm64. A plain path (tools/deko3d_host_shader.py
+    # takes one executable): dxc-macos finds libdxcompiler through its rpath @executable_path/../lib, the bin/lib link to
+    # ../lib/arm64 (docs/nplus-notes.md).
+    set(RENUT_DXC "${RENUT_XENOS_RECOMP_DIR}/thirdparty/dxc-bin/bin/arm64/dxc-macos")
 else()
     # The Linux binary finds libdxcompiler next to it.
     set(RENUT_DXC env "LD_LIBRARY_PATH=${RENUT_XENOS_RECOMP_DIR}/thirdparty/dxc-bin/lib/x64" "${RENUT_DXC_BIN_DIR}/dxc-linux")

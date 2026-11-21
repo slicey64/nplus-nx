@@ -39,8 +39,8 @@ constexpr u32 kPointSize = 0x2E6C;  // katamari-nx: 0x2E7C->0x2E6C
 constexpr u32 kPointSizeMin = 0x2E70;  // katamari-nx: 0x2E80->0x2E70
 constexpr u32 kPointSizeMax = 0x2E74;  // katamari-nx: 0x2E84->0x2E74
 constexpr u32 kHighPrecisionBlend = 0x2EF4;  // [4] (katamari-nx: 0x2F04->0x2EF4)
-constexpr u32 kPresentInterval = 0x3504;  // katamari-nx: 0x351C->0x3504
-constexpr u32 kBehaviorFlags2 = 0x56F8;  // katamari-nx: 0x5DAC->0x56F8
+constexpr u32 kPresentInterval = 0x350C;  // katamari-nx: 0x351C->0x3504; nplus: 0x3504->0x350C
+constexpr u32 kBehaviorFlags2 = 0x5708;  // katamari-nx: 0x5DAC->0x56F8; nplus: 0x56F8->0x5708
 // Sampler state storage, a byte per sampler.
 constexpr u32 kMaxAnisotropy = 0x2E8C;  // katamari-nx: 0x2E9C->0x2E8C
 constexpr u32 kMaxMipLevel = 0x2EA6;  // katamari-nx: 0x2EB6->0x2EA6
@@ -729,8 +729,8 @@ constexpr SamplerStateFn kSamplerStateFns[kSamplerStates] = {
 };
 
 // N&B's state tables: {getter, setter, default} per state.
-constexpr u32 kRenderStateTable = 0x82AD8E48;  // katamari-nx: 0x82D8A948->0x82AD8E48
-constexpr u32 kSamplerStateTable = 0x82AD9308;  // katamari-nx: 0x82D8AE28->0x82AD9308
+constexpr u32 kRenderStateTable = 0x8274D980;  // nplus: 101 {getter, setter, default} into D3D;  // katamari-nx: 0x82D8A948->0x82AD8E48
+constexpr u32 kSamplerStateTable = 0x8274DE40;  // nplus: 20 entries, 0x4C0 after the render states as in Katamari;  // katamari-nx: 0x82D8AE28->0x82AD9308
 constexpr u32 kTextureSamplers = 26;
 
 u32 TableWord(u32 table, u32 index, u32 field) {
@@ -1370,7 +1370,7 @@ namespace {
 
 // Per D3DFORMAT (low 6 bits) its format description; 0xF00 marks a float
 // depth format (word_82005200).
-constexpr u32 kFormatTable = 0x820FA9D0;  // katamari-nx: 0x82005200->0x820FA9D0
+constexpr u32 kFormatTable = 0x82086688;  // nplus: the u16 bpp/flags table;  // katamari-nx: 0x82005200->0x820FA9D0
 // The register packets between RB_COPY_CONTROL and RB_COPY_DEST_INFO.
 constexpr u32 kCopyControl = 0x2A18;
 constexpr u32 kCopyDestInfo = 0x2A24;
@@ -1614,9 +1614,9 @@ void Resolve(Device device, u32 flags, u32 dest_texture, float clear_z, u32 clea
 namespace {
 
 constexpr u32 kExportAddress = 0x2898;       // [Index]: the stream's GPU address
-constexpr u32 kExportCount = 0x34A8;         // BeginExports not yet ended (katamari-nx: 0x34C0->0x34A8)
-constexpr u32 kExportNanVertexDone = 0x34AC;  // katamari-nx: 0x34C4->0x34AC
-constexpr u32 kExportFlags = 0x34B0;  // katamari-nx: 0x34C8->0x34B0
+constexpr u32 kExportCount = 0x34B0;         // BeginExports not yet ended (katamari-nx: 0x34C0->0x34A8); nplus: 0x34A8->0x34B0
+constexpr u32 kExportNanVertexDone = 0x34B4;  // katamari-nx: 0x34C4->0x34AC; nplus: 0x34AC->0x34B4
+constexpr u32 kExportFlags = 0x34B8;  // katamari-nx: 0x34C8->0x34B0; nplus: 0x34B0->0x34B8
 // N&B's switches for the two GPU workarounds below (dword_82E1A9E4/9E8). katamari-nx: XDK 2.0.5632 has no memexport
 // (no BeginExport / EndExport, the export hooks are not registered), so no such words: 0 = not set.
 constexpr u32 kSkipExportNanVertex = 0;

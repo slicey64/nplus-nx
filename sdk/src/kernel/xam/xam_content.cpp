@@ -21,7 +21,9 @@
 #include <rex/system/xenumerator.h>
 #include <rex/system/xtypes.h>
 
-REXCVAR_DEFINE_UINT32(license_mask, 0, "Kernel", "Set license mask for activated content");
+// nplus-nx: 1 by default (bit 0: the title is purchased). N+ is an XBLA title the player supplies; with 0 it runs as
+// its trial ("UNLOCK FULL GAME" on the main menu). Set 0 to see the trial.
+REXCVAR_DEFINE_UINT32(license_mask, 1, "Kernel", "Set license mask for activated content");
 
 namespace rex {
 namespace kernel {

@@ -38,6 +38,9 @@
 #if defined(__aarch64__) && !REX_ARCH_AMD64
 #include <arm_neon.h>
 #endif
+#if defined(__ARM_FEATURE_CRC32)
+#include <arm_acle.h>  // nplus-nx: the ACLE CRC32C intrinsics (Apple clang has no __builtin_aarch64_crc32*)
+#endif
 
 extern "C" {
 #if REX_COMPILER_MSVC
@@ -452,10 +455,10 @@ uint64_t PacketKey(uint64_t seed, const uint8_t* data, size_t size) {
     uint64_t v0, v1;
     std::memcpy(&v0, data + i, 8);
     std::memcpy(&v1, data + i + 8, 8);
-    a = __builtin_aarch64_crc32cx(a, v0);
-    b = __builtin_aarch64_crc32cx(b, v1);
+    a = __crc32cd(a, v0);
+    b = __crc32cd(b, v1);
   }
-  for (; i < size; ++i) a = __builtin_aarch64_crc32cb(a, data[i]);
+  for (; i < size; ++i) a = __crc32cb(a, data[i]);
   return (uint64_t(b) << 32 | a) ^ seed * 0x9E3779B97F4A7C15ull;
 #else
   uint64_t h = seed * 0x9E3779B97F4A7C15ull ^ size;

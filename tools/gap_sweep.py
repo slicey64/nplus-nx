@@ -113,8 +113,10 @@ def main():
             size = notes.get(t) or f'{len(accepted[t])} instructions'
             lines.append(f'"0x{t:08X}" = {{ }}  # {size}, gap sweep\n')
         pf.insert_in_functions(lines)
-        r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-                            os.path.join(pf.TOOLS, 'codegen.ps1'), '-Rexglue', rexglue], capture_output=True, text=True)
+        r = subprocess.run((['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                            os.path.join(pf.TOOLS, 'codegen.ps1'), '-Rexglue', rexglue] if os.name == 'nt' else
+                            # nplus-nx: macOS / Linux run tools/codegen.sh (rehatched-nx's)
+                            ['bash', os.path.join(pf.TOOLS, 'codegen.sh'), rexglue]), capture_output=True, text=True)
         if r.returncode != 0:
             sys.exit(f'codegen failed after pass {n}:\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}')
 

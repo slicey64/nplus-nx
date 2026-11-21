@@ -48,3 +48,8 @@ pgo/*
 # 2026-11-11 (port 81): the in-place copies' form has a profile of its own (CMake BANJO_PGO_DIR_IN_PLACE), kept the same way
 pgo-inplace/*
 !pgo-inplace/*.gcda
+
+# nplus-nx: third-party DXC binaries copied in for macOS (docs/nplus-notes.md)
+app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/lib/
+app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/bin/
+sdk/build-host/

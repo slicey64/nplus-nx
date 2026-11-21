@@ -3,7 +3,15 @@
 #include <fstream>
 #include <optional>
 #include <string>
+#if defined(_WIN32)
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>  // nplus-nx: _NSGetExecutablePath
+#include <cstdint>
+#include <vector>
+#else
+#include <unistd.h>  // rehatched-nx's Linux form
+#endif
 
 namespace PathConfigStore {
 
@@ -31,10 +39,27 @@ namespace PathConfigStore {
     }
 
     inline std::filesystem::path GetStorePath(const std::string& app_name) {
+#if defined(_WIN32)
         wchar_t exe_path[MAX_PATH] = {};
         GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
         std::filesystem::path dir = std::filesystem::path(exe_path).parent_path();
         return dir / (app_name + ".cfg");
+#elif defined(__APPLE__)
+        uint32_t size = 0;
+        _NSGetExecutablePath(nullptr, &size);
+        std::vector<char> buf(size + 1, 0);
+        std::error_code ec;
+        if (_NSGetExecutablePath(buf.data(), &size) != 0)
+            return std::filesystem::current_path() / (app_name + ".cfg");
+        auto exe_path = std::filesystem::canonical(buf.data(), ec);
+        if (ec) return std::filesystem::current_path() / (app_name + ".cfg");
+        return exe_path.parent_path() / (app_name + ".cfg");
+#else
+        std::error_code ec;
+        auto exe_path = std::filesystem::canonical("/proc/self/exe", ec);
+        if (ec) return std::filesystem::current_path() / (app_name + ".cfg");
+        return exe_path.parent_path() / (app_name + ".cfg");
+#endif
     }
 
     inline std::optional<SavedPaths> TryLoad(const std::string& app_name) {

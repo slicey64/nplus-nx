@@ -36,7 +36,10 @@ REXCVAR_DEFINE_BOOL(disable_msaa, false, "Katamari/Graphics",
                     "Not read in this port (N&B's key): msaa_level sets the samples (4, 2 or 1)");
 
 // The frame cap (renut_engine/frameHooks.cpp's limiter, not built here because of its N&B hooks).
-REXCVAR_DEFINE_STRING(frame_cap, "Off", "Katamari/Performance",
+// nplus-nx: 60 by default. N+ steps its physics once per frame and paces itself only by the display's vsync; on a
+// Mac whose window is covered the presents stop waiting and the game ran at 120 fps (2x speed). "Off" keeps the old
+// behaviour.
+REXCVAR_DEFINE_STRING(frame_cap, "60", "Katamari/Performance",
                       "Frame rate cap: Off (the game's own, uncapped as on the Xbox 360) or a number of frames a second")
     .lifecycle(rex::cvar::Lifecycle::kInitOnly);
 

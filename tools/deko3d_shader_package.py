@@ -32,6 +32,9 @@ import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ZSTD = r'C:\devkitPro\msys2\usr\bin\zstd.exe'
+if not os.path.exists(ZSTD):  # nplus-nx: macOS / Linux: the zstd on PATH (Homebrew's)
+    import shutil
+    ZSTD = shutil.which('zstd') or ZSTD
 
 
 def fwd(p):

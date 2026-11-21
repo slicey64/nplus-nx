@@ -1,0 +1,68 @@
+diff --git a/src/Ryujinx.Graphics.Gpu/Engine/Threed/StateUpdater.cs b/src/Ryujinx.Graphics.Gpu/Engine/Threed/StateUpdater.cs
+index 7bcf16a..feeae9a 100644
+--- a/src/Ryujinx.Graphics.Gpu/Engine/Threed/StateUpdater.cs
++++ b/src/Ryujinx.Graphics.Gpu/Engine/Threed/StateUpdater.cs
+@@ -1014,6 +1014,14 @@ namespace Ryujinx.Graphics.Gpu.Engine.Threed
+                     };
+                 }
+ 
++                // nplus-nx: bit 31 of the attribute word is Maxwell's BGRA swap (deko3d's DkVtxAttribState::isBgra), which
++                // the hardware applies to 4x8 attributes; without it, BGRA vertex colours (D3DCOLOR) come out with red and
++                // blue exchanged.
++                if ((vertexAttrib.Attribute & 0x80000000u) != 0 && format == Format.R8G8B8A8Unorm)
++                {
++                    format = Format.B8G8R8A8Unorm;
++                }
++
+                 vertexAttribs[index] = new VertexAttribDescriptor(
+                     bufferIndex,
+                     vertexAttrib.UnpackOffset(),
+diff --git a/src/Ryujinx.HLE/HOS/Kernel/SupervisorCall/Syscall.cs b/src/Ryujinx.HLE/HOS/Kernel/SupervisorCall/Syscall.cs
+index c672206..f11f359 100644
+--- a/src/Ryujinx.HLE/HOS/Kernel/SupervisorCall/Syscall.cs
++++ b/src/Ryujinx.HLE/HOS/Kernel/SupervisorCall/Syscall.cs
+@@ -1550,7 +1550,7 @@ namespace Ryujinx.HLE.HOS.Kernel.SupervisorCall
+ 
+             KProcess currentProcess = KernelStatic.GetCurrentProcess();
+ 
+-            KProcess targetProcess = currentProcess.HandleTable.GetObject<KProcess>(handle);
++            KProcess targetProcess = currentProcess.HandleTable.GetKProcess(handle);
+ 
+             if (targetProcess == null)
+             {
+@@ -1588,7 +1588,7 @@ namespace Ryujinx.HLE.HOS.Kernel.SupervisorCall
+             }
+ 
+             KProcess dstProcess = KernelStatic.GetCurrentProcess();
+-            KProcess srcProcess = dstProcess.HandleTable.GetObject<KProcess>(handle);
++            KProcess srcProcess = dstProcess.HandleTable.GetKProcess(handle);
+ 
+             if (srcProcess == null)
+             {
+@@ -1645,7 +1645,7 @@ namespace Ryujinx.HLE.HOS.Kernel.SupervisorCall
+             }
+ 
+             KProcess dstProcess = KernelStatic.GetCurrentProcess();
+-            KProcess srcProcess = dstProcess.HandleTable.GetObject<KProcess>(handle);
++            KProcess srcProcess = dstProcess.HandleTable.GetKProcess(handle);
+ 
+             if (srcProcess == null)
+             {
+@@ -1683,7 +1683,7 @@ namespace Ryujinx.HLE.HOS.Kernel.SupervisorCall
+ 
+             KProcess currentProcess = KernelStatic.GetCurrentProcess();
+ 
+-            KProcess targetProcess = currentProcess.HandleTable.GetObject<KProcess>(handle);
++            KProcess targetProcess = currentProcess.HandleTable.GetKProcess(handle);
+ 
+             if (targetProcess == null)
+             {
+@@ -1721,7 +1721,7 @@ namespace Ryujinx.HLE.HOS.Kernel.SupervisorCall
+ 
+             KProcess currentProcess = KernelStatic.GetCurrentProcess();
+ 
+-            KProcess targetProcess = currentProcess.HandleTable.GetObject<KProcess>(handle);
++            KProcess targetProcess = currentProcess.HandleTable.GetKProcess(handle);
+ 
+             if (targetProcess == null)
+             {

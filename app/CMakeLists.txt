@@ -199,7 +199,7 @@ endif()
 # shader harvest): src/katamari_keys.cpp defines the keys of those files that the kept ones still read.
 # renut-ultimate (2026-11-20, port 193): the game's name in the build stamp (src/build_stamp.cpp) and the NRO's title. A
 # port sets its own here.
-set(RENUT_GAME_NAME "Beautiful Katamari")
+set(RENUT_GAME_NAME "N+")  # nplus-nx
 
 set(RENUT_SOURCES
     src/main.cpp
@@ -279,6 +279,14 @@ list(APPEND RENUT_SOURCES icon/app.rc)
 else()
     add_executable(renut ${RENUT_SOURCES})
 endif()
+# nplus-nx (macOS): the Switch Mesa (NVK) entry points are weak references in me/masseffect/masseffect_native_draws.cpp,
+# null where no driver exports them (ELF does that by itself). Mach-O's linker wants them allowed undefined; dyld then
+# binds them to null, as the code expects.
+if(APPLE)
+    target_link_options(renut PRIVATE
+        "LINKER:-U,_nvk_switch_dibujo" "LINKER:-U,_nvk_switch_draw" "LINKER:-U,_nvk_switch_set4"
+        "LINKER:-U,_vk_switch_preload_pipeline")
+endif()
 
 # Port 193 (TFU-nx's): the build stamp header, rewritten on every build when its text changes (a custom target with no
 # output runs every time; the script leaves the header alone when the commit is the same).
@@ -306,7 +314,7 @@ rexglue_setup_target(renut GPU_PLUGINS xenos)
 # banjo-nx (2026-10-17): Ryujinx starts NROs without argv[0]; the SDK then takes the NRO's usual place on the SD
 # (sdk/src/core/filesystem_posix.cpp). A console's hbloader always passes the path, so nothing changes there.
 if(REXGLUE_PLATFORM_SWITCH AND TARGET rexcore)
-    target_compile_definitions(rexcore PRIVATE REX_SWITCH_FALLBACK_EXE="/switch/katamari-nx/katamari-nx.nro")
+    target_compile_definitions(rexcore PRIVATE REX_SWITCH_FALLBACK_EXE="/switch/nplus-nx/nplus-nx.nro")
 endif()
 
 # banjo-nx (2026-10-16): Renut's Direct3D-level renderer as a second renderer, chosen at boot (banjo_renderer = "renut";
@@ -948,17 +956,17 @@ if(REXGLUE_PLATFORM_SWITCH)
     # it is missing (DefaultConfigFile). KATAMARI_BUILTIN_CONFIG=OFF: test builds that read a full renut.toml.
     option(KATAMARI_BUILTIN_CONFIG "Switch: the fixed settings compiled in, the player's options in katamari.toml" ON)
     if(KATAMARI_BUILTIN_CONFIG)
-        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/katamari_switch_defaults.toml" KATAMARI_BUILTIN_TEXT)
-        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/katamari_switch.toml" KATAMARI_PLAYER_TEXT)
+        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch_defaults.toml" KATAMARI_BUILTIN_TEXT)
+        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch.toml" KATAMARI_PLAYER_TEXT)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/katamari_builtin_config.h.in"
                        "${CMAKE_CURRENT_BINARY_DIR}/builtin_config/katamari_builtin_config.h" @ONLY)
         target_include_directories(renut PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/builtin_config")
         target_compile_definitions(renut PRIVATE KATAMARI_BUILTIN_CONFIG=1)
         set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-                     "${CMAKE_CURRENT_SOURCE_DIR}/katamari_switch_defaults.toml"
-                     "${CMAKE_CURRENT_SOURCE_DIR}/katamari_switch.toml")
+                     "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch_defaults.toml"
+                     "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch.toml")
     endif()
-    set(RENUT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../tools/switch/icon/katamari_icon.jpg")
+    set(RENUT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../tools/switch/icon/nplus_icon.jpg")  # nplus-nx: none yet (the default icon)
     set(RENUT_ICON_ARG)
     if(EXISTS "${RENUT_ICON}")
         set(RENUT_ICON_ARG ICON "${RENUT_ICON}")
@@ -967,8 +975,8 @@ if(REXGLUE_PLATFORM_SWITCH)
     # 2026-11-05: version 1.0.1, the game's memory and the NRO's code on 2 MB blocks, and the boot's cvars.
     rexglue_switch_add_nro(renut
         NAME "${RENUT_GAME_NAME}"  # port 193: set once, above
-        AUTHOR "ChanseyIsTheBest"
-        VERSION "1.0.1"
+        AUTHOR "slicey64"  # nplus-nx
+        VERSION "0.1.0"  # nplus-nx: first Switch test build
         ${RENUT_ICON_ARG})
 endif()
 
