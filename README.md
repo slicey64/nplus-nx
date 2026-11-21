@@ -3,8 +3,8 @@
 <p align=center>A Nintendo Switch port of the Xbox 360 Arcade game N+</p>
 
 <p align="center"> 
-  <img src="ex/menu.jpg" width="50%" alt="Working N+ Title Screen" />
-  <img src="ex/level.jpg" width="50%" alt="In-game Capture with Stats Overlay" />
+  <img src="ex/menu.jpg" width="49%" alt="Working N+ Title Screen" />
+  <img src="ex/level.jpg" width="49%" alt="In-game Capture with Stats Overlay" />
 </p>
 
 This is a full switch port of a game I knew as a kid and only had the demo of. It comes with all 3 DLCs having full support, all shaders/levels work, and full 60fps. NO GAME FILES ARE INCLUDED! The PC port including all game files can be obtained by yourself at [TheIncredibleHolc/N_Plus](https://github.com/TheIncredibleHolc/N_Plus) on GitHub, that is what this port was built off of.
