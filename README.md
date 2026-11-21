@@ -227,7 +227,8 @@ Your settings go in `nplus.toml` next to the NRO. The defaults are mostly fine. 
 - `frame_cap = "60"`. N+'s physics run once per frame, so if this is off the game speeds up whenever the frame rate
   goes over 60.
 - `license_mask` is 1 by default, that's what makes it the full game. Set it to 0 if you want to see the trial.
-- `input_xbox_layout` picks whether A and B go by position (Xbox) or by letter (Switch).
+- `input_xbox_layout = false` is the default, so the buttons go by the letters on the Switch (A is A). Set it to `true`
+  if you want them by position like an Xbox pad, where the bottom button (B) acts as A.
 
 ## Folders
 

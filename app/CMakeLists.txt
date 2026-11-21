@@ -966,7 +966,7 @@ if(REXGLUE_PLATFORM_SWITCH)
                      "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch_defaults.toml"
                      "${CMAKE_CURRENT_SOURCE_DIR}/nplus_switch.toml")
     endif()
-    set(RENUT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../tools/switch/icon/nplus_icon.jpg")  # nplus-nx: none yet (the default icon)
+    set(RENUT_ICON "${CMAKE_CURRENT_SOURCE_DIR}/../tools/switch/icon/nplus_icon.jpg")  # nplus-nx: the N+ icon, 256x256
     set(RENUT_ICON_ARG)
     if(EXISTS "${RENUT_ICON}")
         set(RENUT_ICON_ARG ICON "${RENUT_ICON}")

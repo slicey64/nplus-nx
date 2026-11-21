@@ -53,3 +53,6 @@ pgo-inplace/*
 app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/lib/
 app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin/bin/
 sdk/build-host/
+
+# macOS folder metadata
+.DS_Store
