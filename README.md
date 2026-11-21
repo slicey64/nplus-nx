@@ -1,157 +1,286 @@
-<h1 align=center>renut_nx_ultimate_base</h1>
+<h1 align=center>nplus-nx</h1>
 
-<p align=center>The Renut renderer for Nintendo Switch ports of Xbox 360 games, with every universal fix and optimisation of the ports so far in one place.</p>
+<p align=center>A Nintendo Switch port of the Xbox 360 Arcade game N+</p>
 
-Each Switch port of an Xbox 360 game here (Banjo-Kazooie: Nuts & Bolts, Kameo, Halo 3, Viva Piñata, Ridge Racer 6, Sonic &
-All-Stars Racing Transformed, Blur, Pac-Man CE DX, Bangai-O HD and the others) carries its own copy of
-[reNut](https://github.com/masterspike52/reNut)'s Direct3D-level renderer on deko3d, and each copy fixed things the others
-never met. This repository puts them together: [katamari-nx](https://github.com/ChanseyIsTheBest/katamari-nx) 1.0.1 with
-the universal fixes and optimisations of the other ports applied to it, port by port, each with its source, its tests and
-its switch. A new port starts from here instead of from one game's copy.
+This is a full switch port of a game I knew as a kid and only had the demo of. It comes with all 3 DLCs having full support, all shaders/levels work, and full 60fps. NO GAME FILES ARE INCLUDED! The PC port including all game files can be obtained by yourself at [TheIncredibleHolc/N_Plus](https://github.com/TheIncredibleHolc/N_Plus) on GitHub, that is what this port was built off of.
 
-> [!NOTE]
-> As checked in, this builds **Beautiful Katamari**: the game layer (code generation manifest, hooks, keys, hand-written
-> functions) is katamari-nx's. The renderer, the shader translator, plume, the SDK and the tools are the shared part. You
-> need your own copy of a game to build anything; this repository holds no game files and no code generated from a game.
+## What works
 
-## What's in it
+- The menus, the tutorials, all of the N+ episodes and the 3 level packs (the DLC)
+- 60fps with sound, on the PC build and on Switch
+- Everything renders right, all 17 of the game's shaders are translated for the Switch
+- The full game is unlocked, not the trial
 
-Every fix, with its source port and commit, the evidence for it, how it was tested here and its switch, is in
-[docs/ultimate-fixes.md](docs/ultimate-fixes.md); [docs/changelog.md](docs/changelog.md) has one line per port. In short:
+I've tested it on the PC build (on my Mac) and on Switch through Ryujinx. Stock Ryujinx can't run it, so there's a
+patch for that further down.
 
-<div align="center">
+## What you need
 
-| Area | What the base has | From |
-| --- | --- | --- |
-| Clipping, geometry, depth | the user clip enable at every command list, the game's clip plane for every vertex shader, both cull bits, vertex kill only when every vertex is killed; strip restarts, export-only shaders, finite vertex floats, missing inputs; the game's depth bias, compressed depth decompressed before a read, the EDRAM depth restore; `invariant gl_Position` so depth-equal passes cover the same pixels | rr6-nx, kameo-nx, vivapinata-nx, keflings-nx, halo3-nx, sasrt-nx, dishonored-nx |
-| Textures, targets, resolves | the fetch constant over SetTexture's pointer, fetch signs, exponents and integer formats, volumes, DXT3A; Kameo's hand-overs, gamma targets, 16-bit fixed targets, one EDRAM view through another, resolves that keep their target, occlusion queries; the 7e3 clamp; zero-level textures watched until their data comes | rr6-nx, kameo-nx, halo3-nx, sasrt-nx, vivapinata-nx, blur-nx, dishonored-nx |
-| Command buffers, memexport | replays inheriting the running device, recorded shader binds, memexport in place, tiles run once for every predicated tile | halo3-nx, sasrt-nx, vivapinata-nx |
-| Shader translator and passes | each fetch's own filters and LOD bias, the cube op, tessellation, indexed literals, raw vertex fetch; the fetch spec, plain fetches, the shader rounds (GPU items with in-run A/B targets), early alpha kill, the vertex fetch types | vivapinata-nx, kameo-nx, sasrt-nx, banjo-nx, feedingfrenzy-nx, dishonored-nx |
-| Renderer speed | small captures, the stream cache, NEON delta masks, the texture memo, specialised pipelines, resolves skipped or copied, the render queue as a lock-free ring, dynamic resolution, SMAA | bangaio-nx, kameo-nx, sasrt-nx, vivapinata-nx, sa2-nx, dishonored-nx |
-| Generated code and machine copies | the post-codegen passes (flush-mode flow, single floats, vector forms, dcbz as DC ZVA, stack forwarding); machine copies of hot functions in place, with whole-program register liveness and a guard that compares them with the original | banjo-nx, sa2-nx, sasrt-nx, blur-nx, katamari-nx |
-| Memory, threads, audio, SDK | a memory governor, guest thread stacks pooled (8 MB each), the SDK in the Switch's LTO and PGO, event waits on an address, lock-free XMA kicks (off), the XMA frame cache, rumble, guest sign-in for players 2-4, the time asleep not reaching the game, multi-disc games, LZ4-packed game files | sasrt-nx, blur-nx, feedingfrenzy2-nx, mk9-nx, ds3-nx, LostOdysseyRecomp |
+- A Mac with Apple Silicon. That's what I built it on. Linux should be close since the base came from Linux ports, but
+  I haven't tried it.
+- [Homebrew](https://brew.sh)
+- [devkitPro](https://devkitpro.org) for the Switch toolchain
+- The N+ PC port download (`N_Plus.zip`). That's where the game files come from.
 
-</div>
+## Getting the game files
 
-Each fix keeps its source port's switch name. Nearly all are on by default; [docs/off-by-default.md](docs/off-by-default.md)
-lists the ones that are not and why (a fix one game needs that breaks another's picture, a faster form that is not exact,
-a speed-up the console measured as slower, a trial). Any of them can be set from a game's toml.
+Everything comes out of the `data` folder in `N_Plus.zip`:
 
-## Defaults a new port settles
+- `data/Original/default.xex` is only the header, and `data/Original/NPlus.exe` is the actual game code. A script puts
+  them back together into a `default.xex` that works.
+- `data/Extracted/Data0.zip` and `Data1.zip` are the game's levels, menus and effects. Leave them zipped, the game reads
+  them like that.
+- `data/DLC` has the 3 level packs.
 
-- **SMAA is on** (`banjo_renut_smaa`) but runs only right after the draw whose pixel shader is listed in
-  `banjo_renut_smaa_after_ps`: until a game lists its own final composite (the last full-screen draw before the HUD), the
-  10 s log line says "SMAA ... 0 frames". `banjo_renut_diag_draw_log_s` logs a frame's draws to find it.
-- **MSAA is off** (`msaa_level` 1). A game's own sample count changes its picture: the port's decision.
-- **The keys of off-by-default.md section 1** fix one game's picture and break another's: a game turns one on only after
-  its own comparison shows the same fault.
-- **The machine copies' register liveness** relies on the 360 calling convention: check it on the game with
-  `tools/cc_entry_census.py` and `tools/cc_exit_census.py` ([docs/building.md](docs/building.md)).
-- **Guest thread stacks are 8 MB** (`switch_guest_stack_mb`); a game with deep recursion sets 16.
-- **Translator and pass changes** take effect when the game's shader package is made again; before a console
-  measurement, build its DKSH cache (`tools/deko3d_variant_cache.py`) so a first run does not compile while it draws.
+Make a folder for the game (I used `~/nplus/game`) and set it up:
 
-## State
+```bash
+python3 tools/nplus_make_xex.py data/Original/default.xex data/Original/NPlus.exe ~/nplus/game/default.xex
+cp data/Extracted/Data0.zip data/Extracted/Data1.zip ~/nplus/game/
+ln -s ~/nplus/game app/assets
+```
 
-> [!WARNING]
-> **The base itself (Beautiful Katamari) has not run on a real console.** Ridge Racer 6 has, on the base
-> (2026-11-08: [docs/ultimate-fixes.md](docs/ultimate-fixes.md), "Ridge Racer 6 on the console"), and most later
-> ports carry their source port's console measurements.
+## Setting up the tools
 
-- Every port builds for the Switch (the everyday NRO, a guard NRO and an LTO + PGO NRO) and for the PC.
-- Each was tested here with Beautiful Katamari: the PC verify (the CPU verify and the guard on every machine copy:
-  0 differences), Ryujinx runs, the shader difftests for the shader passes, as its row in ultimate-fixes.md says. Menus,
-  the hub and a new game through to the practice room run with no errors logged, and the Switch build's picture matches
-  the PC's.
-- Katamari does not record command buffers, use memexport, draw 7e3 targets or bind textures by fetch constant alone, so
-  the fixes for those are only build-tested here; their source ports tested them.
-- The PGO profile in `pgo/` is katamari-nx 1.0.0's (the hooked form, no SDK counts); `pgo-inplace/` (the in-place copies'
-  profile) is empty: a port trains its own.
+From Homebrew:
 
-## Starting a port from it
+```bash
+brew install cmake ninja python spirv-cross zstd
+```
 
-[docs/porting-a-360-game-prompt.md](docs/porting-a-360-game-prompt.md) is the whole order of work, as a prompt for a
-coding-agent session. In short:
+Then make a Python venv for the build scripts:
 
-1. Swap the game layer: `app/renut_manifest.toml` (the code generation config), the game's keys and fixes
-   (`app/src/katamari_*`, `app/src/cpu/hot`), its tomls (`app/katamari_switch*.toml`, `tools/make_katamari_tomls.py`,
-   `dist/switch/katamari-nx`) and its icon.
-2. Bind the D3D hooks to your game's own functions. They are bound to Katamari's addresses (XDK 2.0.5632); a game on
-   another XDK needs its own device layout ([docs/xdk-notes.md](docs/xdk-notes.md) has what ports at XDK 2.0.11164 met).
-   Some hook bodies wait for a game's own function ([docs/ultimate-fixes.md](docs/ultimate-fixes.md), "Needs the game's
-   own function address").
-3. Build as [docs/building.md](docs/building.md) describes: the PC build first (it runs the code generator and the
-   post-codegen steps, and builds the shader translator), then the shaders, then the NRO; then the tests.
-4. Settle the defaults above, then make its web installer from
-   [renut_nx_ultimate_installer](https://github.com/ChanseyIsTheBest/renut_nx_ultimate_installer).
+```bash
+python3 -m venv ~/nplus/.venv
+~/nplus/.venv/bin/pip install xxhash pillow
+```
 
-## Build
+For devkitPro, install the macOS package from [devkitPro/pacman](https://github.com/devkitPro/pacman/releases/latest).
+Running `dkp-pacman` with plain `sudo` breaks on the signature check ("Invalid crypto engine") because sudo can't find
+devkitPro's gpg, so give it its own PATH:
 
-Windows, LLVM clang and the VS Build Tools for the PC build; devkitA64, libnx and deko3d from
-[devkitPro](https://devkitpro.org) for the Switch; Python; and your own copy of the game. The whole process is in
-[docs/building.md](docs/building.md).
+```bash
+sudo env PATH="/opt/devkitpro/pacman/bin:/usr/bin:/bin:/usr/sbin:/sbin" /opt/devkitpro/pacman/bin/pacman -Syu switch-dev switch-portlibs deko3d uam
+export DEVKITPRO=/opt/devkitpro
+export DEVKITA64=$DEVKITPRO/devkitA64
+```
 
-<div align="center">
+The shader translator needs DXC, and only its headers are in this repo. Clone
+[renderbag/dxc-bin](https://github.com/renderbag/dxc-bin) somewhere and copy the Mac files in. The `bin/lib` link is
+there so `dxc-macos` can find its library:
 
-| Folder | Contents |
+```bash
+D=app/thirdparty/reblue-XenosRecomp/thirdparty/dxc-bin
+mkdir -p $D/lib/arm64 $D/bin/arm64
+cp <dxc-bin clone>/lib/arm64/libdxcompiler.dylib $D/lib/arm64/
+cp <dxc-bin clone>/bin/arm64/dxc-macos $D/bin/arm64/
+ln -sfn ../lib/arm64 $D/bin/lib
+```
+
+Last, build glslangValidator and uam from the copies in the repo, and link spirv-cross where the shader tools look for
+it:
+
+```bash
+cmake -S sdk/thirdparty/glslang -B out/glslang -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_OPT=OFF \
+  -DGLSLANG_TESTS=OFF -DENABLE_GLSLANG_BINARIES=ON -DENABLE_HLSL=OFF -DGLSLANG_ENABLE_INSTALL=OFF \
+  -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+cmake --build out/glslang --target glslangValidator
+cmake -S app/thirdparty/uam -B out/deko3d_tools/uam-build -G Ninja -DCMAKE_BUILD_TYPE=Release
+ninja -C out/deko3d_tools/uam-build uam_tool
+ln -sf "$PWD/out/deko3d_tools/uam-build/uam" out/deko3d_tools/uam-build/uam.exe
+mkdir -p out/deko3d_tools/spirv-cross-build
+ln -sf /opt/homebrew/bin/spirv-cross out/deko3d_tools/spirv-cross-build/spirv-cross.exe
+```
+
+## Building
+
+**1. The code generator**
+
+```bash
+cd sdk
+cmake -B build-host -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build-host --target rexglue
+cd ..
+```
+
+**2. Generate the code from the game**
+
+```bash
+bash tools/codegen.sh "$PWD/sdk/out/mac-arm64/rexglue"
+~/nplus/.venv/bin/python tools/post_codegen.py
+```
+
+This writes about 107 MB of C++ into `app/generated`. Never commit it, it's made from the game.
+
+**3. The PC build**
+
+You need the PC build even if you only want the Switch one. N+ compiles its shaders while it runs, and the PC build is
+what catches them. Make the empty shader folder first, then build:
+
+```bash
+~/nplus/.venv/bin/python tools/renut_shader_dump.py --image out/renut_image.bin --out out/renut_shader_dump
+cmake -S app -B app/out/pc_host -G Ninja -DCMAKE_BUILD_TYPE=Release -DREXSDK_DIR="$PWD/sdk" \
+  -DREXGLUE_USE_VULKAN=ON -DREXGLUE_USE_D3D12=OFF \
+  -DPython3_EXECUTABLE="$HOME/nplus/.venv/bin/python" \
+  -DBANJO_GLSLANG_VALIDATOR="$PWD/out/glslang/StandAlone/glslangValidator" \
+  -DRENUT_SHADER_DUMP_DIR="$PWD/out/renut_shader_dump"
+cmake --build app/out/pc_host -j5
+```
+
+`-j5` is for 16 GB of RAM. The generated files are big, so go lower if the build runs out of memory.
+
+**4. Catch the shaders**
+
+Run it and play a bit. Getting into a level is enough, there are only 17 shaders.
+
+```bash
+tools/nplus/run_pc.sh 90 first
+```
+
+Every shader it hasn't seen before gets saved to `app/out/pc_host/shader_capture`. Build the PC version again and they
+get added in:
+
+```bash
+cmake --build app/out/pc_host -j5
+```
+
+**5. The Switch shaders**
+
+```bash
+tools/nplus/switch_shaders.sh
+```
+
+This translates them for deko3d and puts them in `app/out/renut_switch`. It should say `17 shaders: 17 compiled, 0 failed`.
+
+**6. The Switch build**
+
+```bash
+cmake -S app -B app/out/switch -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/tools/switch/cmake/switch-devkitA64.cmake" -DREXSDK_DIR="$PWD/sdk" \
+  -DPython3_EXECUTABLE="$HOME/nplus/.venv/bin/python" \
+  -DBANJO_GLSLANG_VALIDATOR="$PWD/out/glslang/StandAlone/glslangValidator"
+cmake --build app/out/switch -j4
+```
+
+You end up with `app/out/switch/renut.nro`, around 47 MB. It took me about 7 minutes.
+
+## Putting it on your Switch
+
+You need custom firmware (Atmosphère) and hbmenu. Set up the SD card like this:
+
+```text
+sdmc:/switch/nplus-nx/
+├── nplus-nx.nro        (app/out/switch/renut.nro, renamed)
+└── game_root/
+    ├── default.xex     (the one you made)
+    ├── Data0.zip
+    └── Data1.zip
+```
+
+For the DLC, run the install script with the SD card mounted. It sets up the folders the game looks in:
+
+```bash
+tools/nplus/install_dlc.sh data/DLC /Volumes/<your SD card>/switch/nplus-nx/renut
+```
+
+Open it from hbmenu. Hold R while opening an installed game so it gets full RAM, applet mode doesn't give it enough.
+The first time it runs it makes `nplus.toml` next to the NRO, that's where your settings go.
+
+## Testing in Ryujinx
+
+Stock Ryujinx can't run this. It crashes right at the start with `MapProcessCodeMemory() = InvalidHandle` in its log,
+and even when it gets further, red and blue get swapped on anything with vertex colors (the timer bar turns cyan). Real
+hardware doesn't do either of those things, so I patched Ryujinx to match it. The patch is
+`tools/nplus/ryujinx-1.3.3-nplus.patch`, for Ryubing 1.3.3:
+
+```bash
+git clone --depth 1 --branch 1.3.3 https://git.ryujinx.app/ryubing/ryujinx.git
+cd ryujinx
+git apply <path to nplus-nx>/tools/nplus/ryujinx-1.3.3-nplus.patch
+brew install dotnet@9
+export DOTNET_ROOT="$(brew --prefix dotnet@9)/libexec"
+"$(brew --prefix dotnet@9)/bin/dotnet" build src/Ryujinx -c Release -r osx-arm64
+```
+
+If the build can't download its packages, the feeds in its `nuget.config` moved after 1.3.3. Point `LibHacAlpha` at
+`https://git.ryujinx.app/api/packages/projects/nuget/index.json` and delete the `Ryujinx.UpdateClient` source and its
+mapping, nuget.org has those packages now.
+
+I keep a separate Ryujinx data folder for this so it doesn't mess with my normal setup. Copy your `system` folder,
+`bis/system` and `Config.json` into `~/nplus/ryu-data/nplus`, and set the game up in
+`~/nplus/ryu-data/nplus/sdcard/switch/nplus-nx` like the SD card above. Turn on the hypervisor (`"use_hypervisor": true`
+in that Config.json). Ryujinx's JIT gets some of the vector instructions wrong and the startup self-check catches it.
+Then:
+
+```bash
+RYUJINX=<ryujinx clone>/src/Ryujinx/bin/Release/net9.0/osx-arm64/Ryujinx tools/nplus/run_ryujinx.sh 120 test
+```
+
+Logs and screenshots end up in `out/emu_runs/test`.
+
+## Settings
+
+Your settings go in `nplus.toml` next to the NRO. The defaults are mostly fine. The ones that matter for N+:
+
+- `frame_cap = "60"`. N+'s physics run once per frame, so if this is off the game speeds up whenever the frame rate
+  goes over 60.
+- `license_mask` is 1 by default, that's what makes it the full game. Set it to 0 if you want to see the trial.
+- `input_xbox_layout` picks whether A and B go by position (Xbox) or by letter (Switch).
+
+## Folders
+
+| Folder | What's in it |
 | --- | --- |
-| `app/` | The game layer and the renderer (`app/src/renut_engine/gpu`), the shader translator (`app/thirdparty/reblue-XenosRecomp`), plume, the CMake project ([app/README.md](app/README.md)) |
-| `sdk/` | ReXGlue SDK with the Horizon layer and the code generator changes |
-| `tools/` | Code generation steps, build and test scripts, shader tools, the difftests (`tools/difftest`) |
-| `pgo/` | katamari-nx's PGO profile (counts of which code ran, no game code or data) |
-| `dist/` | The settings of the test builds |
-| `docs/` | The documentation (below; [docs/README.md](docs/README.md) is its index) |
-| `shaders/` | masseffect-nx's old shader tools, not used by Renut's build ([shaders/README.md](shaders/README.md)) |
+| `app/` | The game side and Renut, the Direct3D renderer (`app/src/renut_engine/gpu`), plus the shader translator |
+| `sdk/` | The ReXGlue SDK with the Switch layer |
+| `tools/` | The code generation steps, shader tools and build scripts |
+| `tools/nplus/` | The N+ scripts: running, shaders, DLC, the hook map tools and the Ryujinx patch |
+| `docs/nplus-notes.md` | My notes on everything N+ needed: the device layout, the hooks, the addresses and the test runs |
 
-</div>
+## How it was made
 
-## Documentation
+This is built on [renut_nx_ultimate_base](https://github.com/ChanseyIsTheBest/renut_nx_ultimate_base), the Beautiful
+Katamari port that has every other renut port's fixes in it. N+ was made with nearly the same version of Microsoft's
+Xbox 360 dev kit as Katamari, so it was a better starting point than my Angry Birds port
+([rehatched-nx](https://github.com/slicey64/rehatched-nx)).
 
-| Page | What it is |
-| --- | --- |
-| [docs/README.md](docs/README.md) | The index: where to start for each task, and what each page is |
-| [docs/building.md](docs/building.md) | Building, code generation, the shaders, the Switch builds, PGO, the installer, tests |
-| [docs/porting-a-360-game-prompt.md](docs/porting-a-360-game-prompt.md) | Starting a new port from the base: the order of work and the rules |
-| [docs/ultimate-fixes.md](docs/ultimate-fixes.md) | Every fix the base took, with its source, evidence, tests and switch |
-| [docs/changelog.md](docs/changelog.md) | One line per port |
-| [docs/off-by-default.md](docs/off-by-default.md) | The switches that are off by default, and why |
-| [docs/optimising-functions.md](docs/optimising-functions.md) | The hot-function method: machine copies and hand-written natives (Katamari's numbers) |
-| [docs/hand-and-machine-optimising-guide.md](docs/hand-and-machine-optimising-guide.md) | sasrt-nx's guide to the same, with its later tools |
-| [docs/sasrt-batch-cc2.md](docs/sasrt-batch-cc2.md) | The machine copies' register liveness and stack forwarding, and the calling-convention traps |
-| [docs/xdk-notes.md](docs/xdk-notes.md) | What ports at later XDKs met |
-| [docs/katamari-notes.md](docs/katamari-notes.md), [docs/codegen-crash-fixes.md](docs/codegen-crash-fixes.md) | katamari-nx's notes and crash fixes: the worked example |
-| [renut-nx's docs](https://github.com/ChanseyIsTheBest/renut-nx/tree/master/docs) | The method docs the base was built on: the renderer guide, the enhancements reference, deko3d, PGO and LTO |
+To get N+ running on it I had to:
+
+- move the renderer's Direct3D hooks over to N+'s own functions (`app/config/nplus_hook_map.tsv` has every one and why)
+- adjust the Direct3D device offsets, since N+'s device is Katamari's with 16 more bytes in it
+- find the game addresses the renderer reads, and N+'s own setjmp/longjmp
+- add the 349 functions the code generator missed, found in the game's own code
+- make it build on macOS
+
+The details are all in [docs/nplus-notes.md](docs/nplus-notes.md).
 
 ## Credits
 
-- **ChanseyIsTheBest** — the ports and this base.
-- **[Tom Clay](https://github.com/rexglue/rexglue-sdk)** — the ReXGlue SDK, built on the work of the
+- **[TheIncredibleHolc](https://github.com/TheIncredibleHolc/N_Plus)**: the N+ PC port, which is where the game files
+  come from.
+- **ChanseyIsTheBest**: the renut ports and the ultimate base this is built on.
+- **[Tom Clay](https://github.com/rexglue/rexglue-sdk)**: the ReXGlue SDK, built on the work of the
   **[Xenia](https://xenia.jp)** team.
-- **reNut and [masterspike52](https://github.com/masterspike52/reNut)** — reNut's Direct3D-level renderer (reused with its
-  author's permission); reNut's own contributors are credited in [app/README.md](app/README.md).
-- **[StevensND](https://github.com/StevensND/nfsmw-nx)** — nfsmw-nx: the Switch layer of the SDK and much of the method.
-- **[nebadasSwifty](https://github.com/nebadasSwifty/masseffect-nx)** — masseffect-nx.
-- **[hedge-dev](https://github.com/hedge-dev/XenosRecomp)** — XenosRecomp, the Xenos shader translator.
-- **[plume](https://github.com/renderbag/plume)** (from UnleashedRecomp), **[deko3d](https://github.com/devkitPro/deko3d)**
-  and **[uam](https://github.com/devkitPro/uam)** by fincs, with SwitchWakerHD's uam patches.
-- **[devkitPro](https://devkitpro.org) and [switchbrew](https://github.com/switchbrew/libnx)** — devkitA64 and libnx.
-- **[KhronosGroup](https://github.com/KhronosGroup/SPIRV-Cross)** — SPIRV-Cross.
-- The ports whose fixes are here: [renut-nx](https://github.com/ChanseyIsTheBest/renut-nx),
-  [katamari-nx](https://github.com/ChanseyIsTheBest/katamari-nx), [kameo-nx](https://github.com/ChanseyIsTheBest/kameo-nx),
-  [bangaio-nx](https://github.com/ChanseyIsTheBest/bangaio-nx), [pacman-nx](https://github.com/ChanseyIsTheBest/pacman-nx),
-  [keflings-nx](https://github.com/ChanseyIsTheBest/keflings-nx), [sa2-nx](https://github.com/ChanseyIsTheBest/sa2-nx),
-  [futari-nx](https://github.com/ChanseyIsTheBest/futari-nx),
-  [feedingfrenzy-nx](https://github.com/ChanseyIsTheBest/feedingfrenzy-nx), the Halo 3, Viva Piñata, Ridge Racer 6, Sonic &
-  All-Stars Racing Transformed, Blur and Feeding Frenzy 2 ports, [dishonored-nx](https://github.com/cznn999/dishonored-nx)
-  (cznn999), mk9-nx (Thorhax), ds3-nx (VasilkovND) and LostOdysseyRecomp.
-- The other libraries listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- **[masterspike52](https://github.com/masterspike52/reNut)**: reNut and its Direct3D-level renderer.
+- **[StevensND](https://github.com/StevensND/nfsmw-nx)**: the SDK's Switch layer from nfsmw-nx.
+- **[nebadasSwifty](https://github.com/nebadasSwifty/masseffect-nx)**: masseffect-nx.
+- **[hedge-dev](https://github.com/hedge-dev/XenosRecomp)**: XenosRecomp, the shader translator.
+- **[plume](https://github.com/renderbag/plume)**, **[deko3d](https://github.com/devkitPro/deko3d)** and
+  **[uam](https://github.com/devkitPro/uam)** by fincs, plus **[devkitPro](https://devkitpro.org)** and
+  **[switchbrew](https://github.com/switchbrew/libnx)**.
+- **[KhronosGroup](https://github.com/KhronosGroup/SPIRV-Cross)**: SPIRV-Cross.
+- **[Ryubing](https://git.ryujinx.app/ryubing/ryujinx)**: the Ryujinx I tested it on.
+- Every port whose fixes are in the base. They're listed in [docs/ultimate-fixes.md](docs/ultimate-fixes.md), and the
+  other libraries are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+- N+ itself was made by [Metanet Software](https://www.metanetsoftware.com). If you like it, go buy
+  [N++](https://store.steampowered.com/app/230270/N_NPLUSPLUS/).
 
 ## Legal
 
-No affiliation with Microsoft, Nintendo or any game's publisher. This repository contains no game files and no code
-generated from a game. Users must provide their own legally obtained copy, and everything made from it (`app/generated/`,
-the shaders) is made on their own computer. Running homebrew requires custom firmware, which violates Nintendo's ToS and can
-get a console banned — your call.
+I'm not affiliated with Metanet, Microsoft or Nintendo. This repo has no game files and no code generated from the
+game. You have to supply your own, and everything made from it (`app/generated`, the shaders) is made on your own
+computer. Running homebrew needs custom firmware, which is against Nintendo's terms and can get your console banned.
+That's up to you.
 
-Source code is provided under the GPL-3.0 License (see [LICENSE](LICENSE)), like the ports it builds on. The SDK keeps its
-BSD-3-Clause license (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+The code is GPL-3.0 (see [LICENSE](LICENSE)), same as the ports it's built on. The SDK keeps its BSD-3-Clause license
+(see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
