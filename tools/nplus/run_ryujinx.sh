@@ -10,6 +10,10 @@ NAME="${2:-emu}"
 TOML="${3:-}"
 BUILD="${4:-switch}"
 RYU="${RYUJINX:-$HOME/Downloads/Ryujinx.app/Contents/MacOS/Ryujinx}"
+# N+'s patched Ryujinx (tools/nplus/ryujinx-1.3.3-nplus.patch) is a framework-dependent build: it needs .NET 9's root.
+if [ -z "${DOTNET_ROOT:-}" ] && [ -d /opt/homebrew/opt/dotnet@9/libexec ]; then
+    export DOTNET_ROOT=/opt/homebrew/opt/dotnet@9/libexec
+fi
 DATA="$HOME/nplus/ryu-data/nplus"
 SD="$DATA/sdcard/switch/nplus-nx"
 NRO="$SD/nplus-nx.nro"

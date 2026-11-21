@@ -211,3 +211,19 @@ From the Linux session's summary; each item has to be found again with evidence 
   (use_hypervisor true in N+'s data folder's Config.json) runs the code natively: 45134 of 45134 forms as expected.
 - emu5-emu7 (patched Ryujinx): the boot, the menus, "who dat ninja" (Episode 0, Level 0) and gameplay as on the PC,
   57-60 fps after the first seconds; colours as the PC's after patch 2.
+
+## DLC (Levelpacks 1-3)
+
+- The download's data/DLC/<package>/ are extracted packs: Content.header is one XCONTENT_AGGREGATE_DATA (328 bytes:
+  device 1, type 2 marketplace, "N+ Levelpack N", the package name, xuid 0, title 5841085C; no license word) beside
+  the package's Data0.zip.
+- tools/nplus/install_dlc.sh <data/DLC> <user-data root> puts them in the SDK's content layout:
+  <root>/0000000000000000/5841085C/00000002/<package>/ and <root>/0000000000000000/5841085C/Headers/00000002/<package>.header.
+  The roots: the PC's --user_data_root (out/pc_user in tools/nplus/run_pc.sh); the Switch's
+  sdmc:/switch/nplus-nx/renut (the SDK's user folder / the app's name), so on a console the same files go in
+  /switch/nplus-nx/renut/0000000000000000/5841085C/... (and on N+'s Ryujinx SD card the same).
+- PC (dlc1-dlc3) and Ryujinx (emu_dlc): the three packs listed, opened and read; Single Player's categories show
+  N+ LEVELPACK 1, 2 and 3; Levelpack 1's episodes 00-25 and its first level ("we're sorry! to all those stuck on
+  'Master Control'") load and play. N+ needs no license word in the headers.
+- The base's own DLC installer (renut_engine/dlc_install.cpp: STFS packages in a "dlc" folder next to the NRO) is for
+  original packages; the extracted ones above go straight into the layout.
