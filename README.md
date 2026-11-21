@@ -17,10 +17,12 @@ patch for that further down.
 ## What you need
 
 - A Mac with Apple Silicon. That's what I built it on. Linux should be close since the base came from Linux ports, but
-  I haven't tried it.
+  I haven't tried it. (I built this on a M3 MacBook Air, 16G ram running macOS 27.2)
 - [Homebrew](https://brew.sh)
 - [devkitPro](https://devkitpro.org) for the Switch toolchain
 - The N+ PC port download (`N_Plus.zip`). That's where the game files come from.
+
+P.S. You have to build the PC version first, and then the switch version.
 
 ## Getting the game files
 
@@ -162,7 +164,7 @@ cmake -S app -B app/out/switch -G Ninja -DCMAKE_BUILD_TYPE=Release \
 cmake --build app/out/switch -j4
 ```
 
-You end up with `app/out/switch/renut.nro`, around 47 MB. It took me about 7 minutes.
+You end up with `app/out/switch/renut.nro`, around 47 MB. It took me about 7 minutes. (This entirely depends on the system you are building it on. 7 minutes is what it took for my M3 MacBook Air, so expect longer if you have a slower system.)
 
 ## Putting it on your Switch
 
@@ -239,10 +241,7 @@ Your settings go in `nplus.toml` next to the NRO. The defaults are mostly fine. 
 
 ## How it was made
 
-This is built on [renut_nx_ultimate_base](https://github.com/ChanseyIsTheBest/renut_nx_ultimate_base), the Beautiful
-Katamari port that has every other renut port's fixes in it. N+ was made with nearly the same version of Microsoft's
-Xbox 360 dev kit as Katamari, so it was a better starting point than my Angry Birds port
-([rehatched-nx](https://github.com/slicey64/rehatched-nx)).
+This is built on [renut_nx_ultimate_base](https://github.com/ChanseyIsTheBest/renut_nx_ultimate_base), the Beautiful Katamari port that has every other renut port's fixes in it. N+ was made with nearly the same version of Microsoft's Xbox 360 dev kit as Katamari, so it was a better starting point than my Angry Birds port ([rehatched-nx](https://github.com/slicey64/rehatched-nx)).
 
 To get N+ running on it I had to:
 
@@ -281,6 +280,11 @@ I'm not affiliated with Metanet, Microsoft or Nintendo. This repo has no game fi
 game. You have to supply your own, and everything made from it (`app/generated`, the shaders) is made on your own
 computer. Running homebrew needs custom firmware, which is against Nintendo's terms and can get your console banned.
 That's up to you.
+Remember, always use EMUNAND
 
 The code is GPL-3.0 (see [LICENSE](LICENSE)), same as the ports it's built on. The SDK keeps its BSD-3-Clause license
 (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
+
+### AI notice
+
+I definitely had Claude help me with this. If you care enough to not use a Switch port because of AI assistance, that's entirely your decision. Almost none of these ports would be possible without AI, but they also wouldn't be possible without the countless hours of work poured in by real people to get the ReXglue sdk and the existing Switch ports working. Hats off to everyone who has paved the path for us to be able to port stuff like this so easily, you guys are more than legends.
