@@ -280,7 +280,7 @@ I'm not affiliated with Metanet, Microsoft or Nintendo. This repo has no game fi
 game. You have to supply your own, and everything made from it (`app/generated`, the shaders) is made on your own
 computer. Running homebrew needs custom firmware, which is against Nintendo's terms and can get your console banned.
 That's up to you.
-Remember, always use EMUNAND
+Remember, always use EMUMMC
 
 The code is GPL-3.0 (see [LICENSE](LICENSE)), same as the ports it's built on. The SDK keeps its BSD-3-Clause license
 (see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)).
